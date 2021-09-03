@@ -3,7 +3,6 @@ package technicolor
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
@@ -69,20 +68,19 @@ func (m *MediaAccess) Login() error {
 		Salt string `json:"s"`
 		B    string
 	}{}
-	fmt.Println("HERE")
+
 	if err := m.postAuthenticate(map[string]string{"I": i, "A": a}, &challenge); err != nil {
 		return err
 	}
-	fmt.Println("HERE1")
 	ma, mc := c.ProcessChallenge(challenge.Salt, challenge.B)
-	fmt.Println("HERE2")
+
 	verify := struct {
 		M string
 	}{}
 	if err := m.postAuthenticate(map[string]string{"M": ma}, &verify); err != nil {
 		return err
 	}
-	fmt.Println("HERE4")
+
 	if !strings.EqualFold(verify.M, mc) {
 		return errors.New("unable to verify - please check your credentials")
 	}
@@ -126,7 +124,7 @@ func asSpeeds(s string) (up float64, down float64, err error) {
 	if s == "" {
 		return
 	}
-	fmt.Println(" Speed [%s]", s)
+
 	speeds := strings.Fields(s)
 	up, err = strconv.ParseFloat(speeds[0], 64)
 	if err != nil {
@@ -183,9 +181,7 @@ func (m *MediaAccess) getCSRF() (string, error) {
 
 		doc, err := goquery.NewDocumentFromReader(resp.Body)
 		csrfToken, _ := doc.Find(`meta[name="CSRFtoken"]`).Attr("content")
-		m.csrf = csrfToken
-		// string(csrfTokxen)
-		fmt.Println(csrfToken)
+		m.csrf = csrfToken // string(csrfTokxen)
 	}
 
 	return m.csrf, nil
@@ -212,17 +208,13 @@ func (m *MediaAccess) postAuthenticate(data map[string]string, v interface{}) er
 	}
 	defer resp.Body.Close()
 	dec := json.NewDecoder(resp.Body)
-	// body2, err := ioutil.ReadAll(resp.Body)
-	// fmt.Println(string(body2))
 	return dec.Decode(&v)
 }
 
 func (m *MediaAccess) Gather(dslUptime, maximumLineRate, lineRate, outputPower, lineAtttenuation, noiseMargin, uptime string) (*nbntest.ModemStatistics, error) {
-	fmt.Println("Loging in", m.config.IP.String())
 	if err := m.Login(); err != nil {
 		return nil, err
 	}
-	fmt.Println("Logged in ", m.config.IP.String())
 	res, err := m.httpClient.Get("http://" + m.config.IP.String() + "/modals/broadband-modal.lp")
 	if err != nil {
 		return nil, err
